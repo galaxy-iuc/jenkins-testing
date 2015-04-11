@@ -23,7 +23,7 @@
 <li>Install <a href="https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin">GitHub PR Builder Plugin</a> (or whatever is appropriate to your code hosting solution)</li>
 <li>Once you've done that, create a new project and point it at your GH Repo</li>
 <li>Ensure that "Branch Specifier" is left blank.</li>
-<li>Paste <a href="test-repo.sh">test-repo.sh</a> in an execute-shell comamnd during the build phase</li>
+<li>Paste <a href="https://raw.githubusercontent.com/galaxy-iuc/jenkins-testing/master/test-repo.sh">test-repo.sh</a> in an execute-shell comamnd during the build phase</li>
 <li>Publish JUnit reports from <code>reports/*.xml</code>
 </li>
 <li>Publish HTML reports from <code>${WORKSPACE}/reports/${BUILD_NUMBER}/</code>, <code>index.html</code>
