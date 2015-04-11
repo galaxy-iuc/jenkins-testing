@@ -17,3 +17,8 @@ Jenkins scripts for testing Galaxy tool repositories
 ## Known Issues
 
 - Planemo doesn't currently support installing `tool_dependencies.xml`, so you'll need to install any binaries on your jenkins box *manually*.
+
+## TODO
+
+- Convert to `build.xml` or similar (something easily `wget/curl`-able)
+- GH Pages
