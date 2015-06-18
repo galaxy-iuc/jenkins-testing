@@ -3,18 +3,12 @@
 rm ${WORKSPACE}/reports/*.xml;
 # Remember where we started at because CDing in shells can get messy
 orig_dir=$(pwd); 
-# See the planemo install script, we add these so planemo can be found correctly because 
-# it's (mostly) locally installed, so it can automatically be updated
-export PYTHONPATH="~/py/lib/python2.7/site-packages/:~/py" 
-PLANEMO=~/py/bin/planemo
+PLANEMO=planemo
 
 # Report output dir
 REPORT_DIR="${WORKSPACE}/reports/${BUILD_NUMBER}/"
 JUNIT_DIR="${WORKSPACE}/reports/"
 mkdir -p "$REPORT_DIR"
-
-# Brew access
-export PATH="~/.linuxbrew/bin:$PATH"
 
 # Need an index for the HTML output report
 echo "<html><body><h1>Latest Test Results (${BUILD_NUMBER})</h1><ul>" > ${REPORT_DIR}/index.html;
