@@ -1,6 +1,7 @@
 #!/bin/bash
 # Remove old reports, just in case...
 export SHELL=bash
+parallel --record-env
 rm ${WORKSPACE}/reports/*.xml;
 # Remember where we started at because CDing in shells can get messy
 orig_dir=$(pwd); 
@@ -33,13 +34,15 @@ test_it() {
     cd "$orig_dir";
 }
 
+export -f test_it
+
 TOOL_DIRS=$(find tools/ -name '.shed.yml');
 for directory in $TOOL_DIRS;
 do
-  test_it
+  sem -j5 --env _ test_it";" echo done
 done
 
-#sem --wait
+sem --wait
 
 # End of HTML report
 echo "</ul></body></html>" >> ${REPORT_DIR}/index.html;
