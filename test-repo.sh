@@ -1,6 +1,6 @@
 #!/bin/bash
 # Remove old reports, just in case...
-export $SHELL=bash
+export SHELL=bash
 rm ${WORKSPACE}/reports/*.xml;
 # Remember where we started at because CDing in shells can get messy
 orig_dir=$(pwd); 
