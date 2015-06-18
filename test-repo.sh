@@ -39,7 +39,7 @@ export -f test_it
 TOOL_DIRS=$(find tools/ -name '.shed.yml');
 for directory in $TOOL_DIRS;
 do
-  sem -j5 --env _ test_it";" echo done
+  sem -j5 --env ${WORKSPACE} ${PLANEMO} ${REPORT_DIR} $JUNIT_DIR $directory test_it";" echo done
 done
 
 sem --wait
