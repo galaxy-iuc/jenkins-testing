@@ -33,8 +33,6 @@ test_it() {
     cd "$orig_dir";
 }
 
-export -f test_it
-
 TOOL_DIRS=$(find tools/ -name '.shed.yml');
 for directory in $TOOL_DIRS;
 do
