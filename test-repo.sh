@@ -16,7 +16,7 @@ echo "<html><body><h1>Latest Test Results (${BUILD_NUMBER})</h1><ul>" > ${REPORT
 # Test all the things!
 
 # Test function
-test_it() {
+function test_it() {
 	test_directory=$(dirname "$directory")
     test_name=$(dirname "$directory" | sed 's|.*\/||g')
     # Prep link for the HTML report
