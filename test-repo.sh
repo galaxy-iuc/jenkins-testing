@@ -16,7 +16,7 @@ echo "<html><body><h1>Latest Test Results (${BUILD_NUMBER})</h1><ul>" > ${REPORT
 # Test all the things!
 
 # Test function
-function test_it() {
+test_it() {
 	test_directory=$(dirname "$directory")
     test_name=$(dirname "$directory" | sed 's|.*\/||g')
     # Prep link for the HTML report
@@ -30,8 +30,9 @@ function test_it() {
         
     # Return to whence we came
     cd "$orig_dir";
-
 }
+
+export -f test_it
 
 TOOL_DIRS=$(find tools/ -name '.shed.yml');
 for directory in $TOOL_DIRS;
