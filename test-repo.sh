@@ -36,10 +36,10 @@ test_it() {
 TOOL_DIRS=$(find tools/ -name '.shed.yml');
 for directory in $TOOL_DIRS;
 do
-  sem -j 5 test_it";" echo done
+  test_it
 done
 
-sem --wait
+#sem --wait
 
 # End of HTML report
 echo "</ul></body></html>" >> ${REPORT_DIR}/index.html;
