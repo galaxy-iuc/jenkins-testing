@@ -14,9 +14,9 @@ mkdir -p "$REPORT_DIR"
 echo "<html><body><h1>Latest Test Results (${BUILD_NUMBER})</h1><ul>" > ${REPORT_DIR}/index.html;
 
 # Test all the things!
-TOOL_DIRS=$(find tools/ -name '.shed.yml');
-for directory in $TOOL_DIRS;
-do
+
+# Test function
+test_it {
 	test_directory=$(dirname "$directory")
     test_name=$(dirname "$directory" | sed 's|.*\/||g')
     # Prep link for the HTML report
@@ -30,7 +30,16 @@ do
         
     # Return to whence we came
     cd "$orig_dir";
+
+}
+
+TOOL_DIRS=$(find tools/ -name '.shed.yml');
+for directory in $TOOL_DIRS;
+do
+  sem -j 5 test_it
 done
+
+sem --wait
 
 # End of HTML report
 echo "</ul></body></html>" >> ${REPORT_DIR}/index.html;
