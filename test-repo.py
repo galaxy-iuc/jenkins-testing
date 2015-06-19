@@ -51,7 +51,7 @@ def prepare_cmds(report_dir, build_number, commandlines):
     
     cmds = []
     for test_name, test_directory, test_output_xunit, test_output in commandlines:
-        test_result.append('<li><a href="{0}.html">{1}</a></li>'.format(test_name))
+        test_result.append('<li><a href="{0}.html">{0}</a></li>'.format(test_name))
         cmd = "cd {0} && planemo test --install_galaxy --test_output_xunit {1}  --test_output {2}".format(
             test_directory, test_output_xunit, test_output)
         cmds.append(cmd)
