@@ -7,7 +7,7 @@ Jenkins scripts for testing Galaxy tool repositories
 1. You'll want to install [GitHub PR Builder Plugin](https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin) and follow the setup instructions there.
 2. Once you've done that, create a new project and point it at your GH Repo
 3. Ensure that "Branch Specifier" is left blank.
-4. Stick [test-repo.sh](test-repo.sh) in an execute-shell command during the build phase
+4. Stick [test-repo.py](test-repo.py) in an execute-shell command during the build phase
 5. Publish JUnit reports from `reports/*.xml`
 6. Publish HTML reports from `${WORKSPACE}/reports/${BUILD_NUMBER}/`, `index.html`
 7. ...
