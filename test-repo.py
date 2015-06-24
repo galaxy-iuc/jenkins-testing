@@ -8,38 +8,39 @@ import yaml
 from multiprocessing import Pool
 
 
-def clean_reports(workspace):
+def clean_reports(report_dir):
     '''
     Remove old reports, if they exist.
     '''
-    xml_files = glob.glob('{0}/reports/*.xml'.format(workspace))
+    xml_files = glob.glob('{0}/*.xml'.format(report_dir))
     [os.remove(report) for report in xml_files]
     
-def setup_report_dirs(workspace, build_number):
-    report_dir = "{0}/reports/{1}".format(workspace, build_number)
-    junit_dir = "{0}/reports".format(workspace)
-    if not os.path.exists(report_dir):
-        os.makedirs(report_dir)
-    return (report_dir, junit_dir)
+def setup_report_dirs(report_dir, build_number):
+    current_report_dir = "{0}/{1}".format(report_dir, build_number)
+    #don't need junit_dir anymore
+    #junit_dir = "{0}/reports".format(report_dir)
+    if not os.path.exists(current_report_dir):
+        os.makedirs(current_report_dir)
+    return current_report_dir
 
-def scan_dirs(workspace):
+def scan_dirs(tool_dir):
     '''
     returns list with path to .shed.yml
     '''
     paths = []
-    for root, dirs, files in os.walk("{0}".format(workspace)):
+    for root, dirs, files in os.walk("{0}".format(tool_dir)):
         for file in files:
             if file == ".shed.yml":
                 path = root+'/'+file
                 paths.append(path)
     return paths
 
-def prepare_tests(workspace, report_dir, junit_dir, api_keys=None):
+def prepare_tests(tool_dir, current_report_dir, report_dir, api_keys=None):
     '''
     Enter all directories and scan for .shed.yml files.
     Then setup dictionary with required values
     '''
-    yaml_files = scan_dirs(workspace)
+    yaml_files = scan_dirs(tool_dir)
     tests = []
     for file in yaml_files:
         test = {}
@@ -47,13 +48,13 @@ def prepare_tests(workspace, report_dir, junit_dir, api_keys=None):
         test['name'] = shed_yml['name']
         test['owner'] = shed_yml['owner']
         test['test_directory'] = file.split('/.shed.yml')[0]
-        test['test_output_xunit'] = junit_dir+"/{0}.xml".format(shed_yml['name'])
-        test['test_output'] = report_dir+"/{0}.html".format(shed_yml['name'])
+        test['test_output_xunit'] = report_dir+"/{0}.xml".format(shed_yml['name'])
+        test['test_output'] = current_report_dir+"/{0}.html".format(shed_yml['name'])
         test['toolshed'] = shed_yml['toolshed']
         tests.append(test)
     return tests
 
-def prepare_html(report_dir, build_number, tests):
+def prepare_html(current_report_dir, build_number, tests):
     '''
     write index for html result.
     '''
@@ -64,7 +65,7 @@ def prepare_html(report_dir, build_number, tests):
         test_result.append('<li><a href="{0}.html">{0}</a></li>'.format(test['name']))
     footer = ["</ul></body></html>"]
     result = header+test_result+footer
-    with open("{0}/index.html".format(report_dir),'w') as index:
+    with open("{0}/index.html".format(current_report_dir),'w') as index:
         [index.write(line+'\n') for line in result]
 
 def construct_cmds(tests, test_type, shed_target=None, api_keys=None):
@@ -100,19 +101,21 @@ def yaml_to_dict(yaml_file):
     
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description='Get a list of repos with .shed.yml and commence testing')
-    parser.add_argument('--workspace', required=True, help='Workspace variable in jenkins/working directory to scan recursively')
-    parser.add_argument('--build_number', required=True,  help='Build number in jenkins')
-    parser.add_argument('--cores', type=int, default=1, help='Number of cores to use for parallelizing planemo')
-    parser.add_argument('--test_type', type=str, choices=['test', 'shed_test'], default='test', help='Select whether to do a shed_test or a simple test')    
+    parser = argparse.ArgumentParser(description='Get a list of repos with .shed.yml and commence testing.')
+    parser.add_argument('--tool_dir', required=True, help='tool directory to scan recursively.')
+    parser.add_argument('--report_dir', required=True, help='Directory to write test report to.')
+    parser.add_argument('--build_number', required=True,  help='Build number in jenkins.')
+    parser.add_argument('--cores', type=int, default=1, help='Number of cores to use for parallelizing planemo.')
+    parser.add_argument('--test_type', type=str, choices=['test', 'shed_test'], default='test', help='Select whether to do a shed_test or a simple test.')    
     parser.add_argument('--update_shed', type=bool, default=False, help='Select whether to upload to specified toolshed beforehand.')    
-    parser.add_argument('--api_keys', default=None, help='Yaml file containing api keys required for shed_test')    
-    parser.add_argument('--shed_target', default=None, help='Yaml file containing api keys required for shed_test')
+    parser.add_argument('--api_keys', default=None, help='Yaml file containing api keys required for shed_test.')    
+    parser.add_argument('--shed_target', default=None, help='Yaml file containing api keys required for shed_test.')
     args = parser.parse_args()
 
-    args.workspace = os.path.abspath(args.workspace)
-    clean_reports(args.workspace)
-    report_dir, junit_dir = setup_report_dirs(args.workspace, args.build_number)
+    args.report_dir = os.path.abspath(args.report_dir)
+    args.tool_dir = os.path.abspath(args.tool_dir)
+    clean_reports(args.report_dir)
+    current_report_dir = setup_report_dirs(args.report_dir, args.build_number)
     if args.test_type == "shed_test":
         try:
             api_keys = yaml_to_dict(args.api_keys)
@@ -121,8 +124,8 @@ if __name__ == "__main__":
             raise
     else:
         api_keys=None
-    tests = prepare_tests(args.workspace, report_dir, junit_dir, api_keys)
-    prepare_html(report_dir, args.build_number, tests)
+    tests = prepare_tests(args.tool_dir, current_report_dir, args.report_dir, api_keys)
+    prepare_html(current_report_dir, args.build_number, tests)
     cmds = construct_cmds ( tests, args.test_type, args.shed_target, api_keys)
     if args.cores > 1:
         p = Pool(processes=args.cores)
