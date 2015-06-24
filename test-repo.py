@@ -23,24 +23,26 @@ def setup_report_dirs(report_dir, build_number):
         os.makedirs(current_report_dir)
     return current_report_dir
 
-def scan_dirs(tool_dir):
+def scan_dirs(tool_dirs):
     '''
     returns list with path to .shed.yml
     '''
     paths = []
-    for root, dirs, files in os.walk("{0}".format(tool_dir)):
-        for file in files:
-            if file == ".shed.yml":
-                path = root+'/'+file
-                paths.append(path)
+    for tool_dir in tool_dirs:
+        for root, dirs, files in os.walk("{0}".format(tool_dir)):
+            for file in files:
+                if file == ".shed.yml":
+                    path = root+'/'+file
+                    paths.append(path)
     return paths
 
-def prepare_tests(tool_dir, current_report_dir, report_dir, api_keys=None):
+def prepare_tests(tool_dirs, current_report_dir, report_dir, api_keys=None):
     '''
     Enter all directories and scan for .shed.yml files.
     Then setup dictionary with required values
     '''
-    yaml_files = scan_dirs(tool_dir)
+    tool_dirs = [os.path.abspath(dir) for dir in tool_dirs]
+    yaml_files = scan_dirs(tool_dirs)
     tests = []
     for file in yaml_files:
         test = {}
@@ -102,7 +104,7 @@ def yaml_to_dict(yaml_file):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Get a list of repos with .shed.yml and commence testing.')
-    parser.add_argument('--tool_dir', required=True, help='tool directory to scan recursively.')
+    parser.add_argument('--tool_dirs', nargs='+', required=True, help='tool directories to scan recursively.')
     parser.add_argument('--report_dir', required=True, help='Directory to write test report to.')
     parser.add_argument('--build_number', required=True,  help='Build number in jenkins.')
     parser.add_argument('--cores', type=int, default=1, help='Number of cores to use for parallelizing planemo.')
@@ -113,7 +115,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.report_dir = os.path.abspath(args.report_dir)
-    args.tool_dir = os.path.abspath(args.tool_dir)
     clean_reports(args.report_dir)
     current_report_dir = setup_report_dirs(args.report_dir, args.build_number)
     if args.test_type == "shed_test":
@@ -124,7 +125,7 @@ if __name__ == "__main__":
             raise
     else:
         api_keys=None
-    tests = prepare_tests(args.tool_dir, current_report_dir, args.report_dir, api_keys)
+    tests = prepare_tests(args.tool_dirs, current_report_dir, args.report_dir, api_keys)
     prepare_html(current_report_dir, args.build_number, tests)
     cmds = construct_cmds ( tests, args.test_type, args.shed_target, api_keys)
     if args.cores > 1:
