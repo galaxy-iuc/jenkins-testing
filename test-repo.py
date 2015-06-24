@@ -1,4 +1,5 @@
-# %load /home/marius/src/gedtools/test-repo2.py
+#!/usr/bin/env python
+
 import os
 import glob
 import argparse
@@ -38,16 +39,17 @@ def prepare_tests(workspace, report_dir, junit_dir, api_keys=None):
     Enter all directories and scan for .shed.yml files.
     Then setup dictionary with required values
     '''
-    paths = scan_dirs(workspace)
+    yaml_files = scan_dirs(workspace)
     tests = []
-    for path in paths:
+    for file in yaml_files:
         test = {}
-        shed_yml = yaml_to_dict(path)
+        shed_yml = yaml_to_dict(file)
         test['name'] = shed_yml['name']
         test['owner'] = shed_yml['owner']
-        test['test_directory'] = path.split('/.shed.yml')[0]
+        test['test_directory'] = file.split('/.shed.yml')[0]
         test['test_output_xunit'] = junit_dir+"/{0}.xml".format(shed_yml['name'])
         test['test_output'] = report_dir+"/{0}.html".format(shed_yml['name'])
+        test['toolshed'] = shed_yml['toolshed']
         tests.append(test)
     return tests
 
@@ -78,9 +80,14 @@ def construct_cmds(tests, test_type, shed_target=None, api_keys=None):
     else:
         for test in tests:
             api_key = api_keys['type']['toolshed']['target'][shed_target]['user'][test['owner']]['key']
+            update_cmd = ""
+            if args.update_shed:
+                for toolshed in test['toolshed']:
+                    update_cmd = "cd {0} && planemo shed_update --force_repository_creation --shed_target {1} --shed_key {2} . || true && ".format(test['test_directory'], toolshed, api_key )
+                
             cmd = "cd {0} && planemo shed_test --install_galaxy --test_output_xunit {1}  --test_output {2} --shed_target {3} --shed_key {4} .".format(test['test_directory'], test['test_output_xunit'],
                                                 test['test_output'], shed_target, api_key )
-            print cmd
+            cmd = update_cmd+cmd
             cmds.append(cmd)
     return cmds
         
@@ -98,6 +105,7 @@ if __name__ == "__main__":
     parser.add_argument('--build_number', required=True,  help='Build number in jenkins')
     parser.add_argument('--cores', type=int, default=1, help='Number of cores to use for parallelizing planemo')
     parser.add_argument('--test_type', type=str, choices=['test', 'shed_test'], default='test', help='Select whether to do a shed_test or a simple test')    
+    parser.add_argument('--update_shed', type=bool, default=False, help='Select whether to upload to specified toolshed beforehand.')    
     parser.add_argument('--api_keys', default=None, help='Yaml file containing api keys required for shed_test')    
     parser.add_argument('--shed_target', default=None, help='Yaml file containing api keys required for shed_test')
     args = parser.parse_args()
