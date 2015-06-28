@@ -45,17 +45,15 @@ echo "Starting job"
 
 if [ "$TARGET"=="LOCAL" ];
 then
-    python ./test-repo.py --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
-       --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 10 --test_type shed_test \
-       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target https://lbcd41.snv.jussieu.fr/toolshed/ \
-       --update_shed True
+    python ./test-repo.py shed_test --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
+       --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 10 \
+       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target https://lbcd41.snv.jussieu.fr/toolshed/
 
 elif [ "$TARGET"=="TESTTOOLSHED" ];
 then
-      python ./test-repo.py --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
-       --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 10 --test_type shed_test \
-       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target testtoolshed \
-       --update_shed True
+      python ./test-repo.py shed_test --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
+       --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 10 \
+       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target testtoolshed
 else
       echo "Choose local or testtoolshed"
 fi
