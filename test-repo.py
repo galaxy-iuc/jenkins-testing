@@ -82,19 +82,23 @@ def construct_cmds(tests, action, shed_target=None, api_keys=None):
         for test in tests:
             api_key = api_keys['type']['toolshed']['target'][shed_target]['user'][test['owner']]['key']
             for toolshed in test['toolshed']:
-                cmd = "cd {0} && planemo shed_update --force_repository_creation --shed_target {1} --shed_key {2} . ".format(test['test_directory'], toolshed, api_key )    
-                cmds.append(cmd)
+                if toolshed==shed_target:
+                    cmd = "cd {0} && planemo shed_update --force_repository_creation --shed_target {1} --shed_key {2} . ".format(test['test_directory'], toolshed, api_key )    
+                    cmds.append(cmd)
+            else:
+                continue
     else:
         for test in tests:
             api_key = api_keys['type']['toolshed']['target'][shed_target]['user'][test['owner']]['key']
             update_cmd = ""
             for toolshed in test['toolshed']:
-                update_cmd = "cd {0} && planemo shed_update --force_repository_creation --shed_target {1} --shed_key {2} . || true && ".format(test['test_directory'], toolshed, api_key )
-                
-                cmd = "cd {0} && planemo shed_test --install_galaxy --test_output_xunit {1}  --test_output {2} --shed_target {3} --shed_key {4} .".format(test['test_directory'], test['test_output_xunit'],
-                                                test['test_output'], shed_target, api_key )
-                cmd = update_cmd+cmd
-                cmds.append(cmd)
+                if toolshed==shed_target:
+                     update_cmd = "cd {0} && planemo shed_update --force_repository_creation --shed_target {1} --shed_key {2} . || true && ".format(test['test_directory'], toolshed, api_key )
+                     
+                    cmd = "cd {0} && planemo shed_test --install_galaxy --test_output_xunit {1}  --test_output {2} --shed_target {3} --shed_key {4} .".format(test['test_directory'], test['test_output_xunit'],
+                                                    test['test_output'], shed_target, api_key )
+                    cmd = update_cmd+cmd
+                    cmds.append(cmd)
     return cmds
         
 def mp_run(cmd):
