@@ -43,13 +43,13 @@ echo "Starting job"
 
 #Local toolshed test
 
-if [ "$TARGET"=="LOCAL" ];
+if [ "$TARGET" == "LOCAL" ];
 then
     python ./test-repo.py shed_test --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
        --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 10 \
        --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target https://lbcd41.snv.jussieu.fr/toolshed/
 
-elif [ "$TARGET"=="TESTTOOLSHED" ];
+elif [ "$TARGET" == "TESTTOOLSHED" ];
 then
       python ./test-repo.py shed_test --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
        --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 10 \
