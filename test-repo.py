@@ -93,12 +93,23 @@ def construct_cmds(tests, action, shed_target=None, api_keys=None):
             update_cmd = ""
             for toolshed in test['toolshed']:
                 if toolshed==shed_target:
+                    if skip_test(test['test_directory'], toolshed):
+                        cmds.append ("echo \"{0} tool unchanged, skip testing\"".format(test['name']))
+                        continue
                     update_cmd = "cd {0} && planemo shed_update --force_repository_creation --shed_target {1} --shed_key {2} . || true && ".format(test['test_directory'], toolshed, api_key )
                     cmd = "cd {0} && planemo shed_test --install_galaxy --test_output_xunit {1}  --test_output {2} --shed_target {3} --shed_key {4} .".format(test['test_directory'], test['test_output_xunit'], test['test_output'], shed_target, api_key )
                     cmd = update_cmd+cmd
                     cmds.append(cmd)
     return cmds
-        
+
+def skip_test(test_dir, shed_target):
+    cmd = "cd {0} && planemo shed_diff --shed_target {1}".format(test_dir, shed_target)
+    rc = subprocess.call(cmd, shell=True)
+    if rc == 0:
+        return True
+    else:
+        return False
+
 def mp_run(cmd):
     subprocess.call(cmd, shell=True)
 
@@ -125,6 +136,15 @@ def run_test(args, current_report_dir):
     return cmds
 
 def run_shed_test(args, current_report_dir, api_keys):
+    '''
+    Run tests by using planemo shed_test, which installs tools and tool dependencies from the toolshed
+    '''
+    tests = prepare_tests(args.tool_dirs, current_report_dir, args.report_dir, api_keys)
+    prepare_html(current_report_dir, args.build_number, tests)
+    cmds = construct_cmds ( tests, args.command, args.shed_target, api_keys)
+    return cmds
+
+def run_shed_test_incremental(args, current_report_dir, api_keys):
     '''
     Run tests by using planemo shed_test, which installs tools and tool dependencies from the toolshed
     '''
