@@ -47,13 +47,15 @@ if [ "$TARGET" == "LOCAL" ];
 then
     python ./test-repo.py shed_test --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
        --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 4 \
-       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target https://lbcd41.snv.jussieu.fr/toolshed/
+       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target https://lbcd41.snv.jussieu.fr/toolshed/ \
+       ${SKIP_TEST}
 
 elif [ "$TARGET" == "TESTTOOLSHED" ];
 then
       python ./test-repo.py shed_test --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
        --report_dir ${WORKSPACE}/reports --build_number ${BUILD_NUMBER} --cores 4 \
-       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target testtoolshed
+       --api_keys ${WORKSPACE}/lab-coding/api_keys/api_keys.yaml  --shed_target testtoolshed \
+      ${SKIP_TEST}
 else
       echo "Choose local or testtoolshed"
 fi
