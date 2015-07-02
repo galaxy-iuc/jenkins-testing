@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import glob
 import argparse
 import subprocess
@@ -87,6 +88,13 @@ def construct_cmds(tests, action, shed_target=None, api_keys=None, skip_test=Fal
                     cmds.append(cmd)
             else:
                 continue
+    elif action == 'shed_diff':
+        cmds = []
+        for test in tests:
+            for toolshed in test['toolshed']:
+                if toolshed==shed_target:
+                    cmds.append((test['test_directory'], toolshed))
+        return cmds
     else:
         for test in tests:
             api_key = api_keys['type']['toolshed']['target'][shed_target]['user'][test['owner']]['key']
@@ -94,7 +102,7 @@ def construct_cmds(tests, action, shed_target=None, api_keys=None, skip_test=Fal
             for toolshed in test['toolshed']:
                 if toolshed==shed_target:
                     if skip_test:
-                        if test_skippable(test['test_directory'], toolshed):
+                        if test_skippable([test['test_directory'], toolshed]):
                             cmds.append ("echo \"{0} tool unchanged, skip testing\"".format(test['name']))
                             continue
                     update_cmd = "cd {0} && planemo shed_update --force_repository_creation --shed_target {1} --shed_key {2} . || true && ".format(test['test_directory'], toolshed, api_key )
@@ -103,7 +111,21 @@ def construct_cmds(tests, action, shed_target=None, api_keys=None, skip_test=Fal
                     cmds.append(cmd)
     return cmds
 
-def test_skippable(test_dir, shed_target):
+def process(func, function_args, cores):
+    if cores > 1:
+        p = Pool(processes=cores)
+        result = p.map_async(func, function_args)
+        results = result.get()
+        p.close()
+        p.join()
+        return results
+    else:
+        results = [func(cmd) for cmd in cmds]
+        return results
+
+def test_skippable(function_args):
+    test_dir = function_args[0]
+    shed_target = function_args[1]
     cmd = "cd {0} && planemo shed_diff --shed_target {1}".format(test_dir, shed_target)
     rc = subprocess.call(cmd, shell=True)
     if rc == 0:
@@ -111,7 +133,7 @@ def test_skippable(test_dir, shed_target):
     else:
         return False
 
-def mp_run(cmd):
+def run_cmd(cmd):
     subprocess.call(cmd, shell=True)
 
 def yaml_to_dict(yaml_file):
@@ -145,6 +167,14 @@ def run_shed_test(args, current_report_dir, api_keys, skip_test):
     cmds = construct_cmds ( tests, args.command, args.shed_target, api_keys, skip_test)
     return cmds
 
+def run_shed_diff(args):
+    '''
+    Update toolsheds with local changes.
+    '''
+    tests = prepare_tests(args.tool_dirs, '', '', "")
+    cmds = construct_cmds ( tests, args.command, args.shed_target, "")
+    return cmds
+
 if __name__ == "__main__":
     
     parent = arguments.setup_parent()
@@ -157,11 +187,25 @@ if __name__ == "__main__":
                                         description="Run functional tests within a disposable galaxy instance. Does not install tool dependencies.")
     parser_shed_test = subparsers.add_parser('shed_test', help='Install from toolshed and run functional tests.', 
                                              description="Upload tool to indicated toolshed and run functional tests within a disposable galaxy instance. Tool and dependencies will be downloaded from the indicated toolshed.", parents=[parent])
+    parser_shed_diff = subparsers.add_parser('shed_diff', help='Compare local tools to toolshed tools', 
+                                             description="Compare local tools to toolshed tools.")
+    parser_shed_diff = arguments.tool_dirs(parser_shed_diff)
+    parser_shed_diff = arguments.shed_target(parser_shed_diff)
+    parser_shed_diff = arguments.cores(parser_shed_diff)
     parser_update = arguments.shed_args(parser_update)
     parser_shed_test = arguments.shed_args(parser_shed_test)
     parser_shed_test.add_argument('--skip_test', dest="skip_test", action="store_true", \
                                   help='If there is no difference between toolshed and local repo, skip testing')
     args = parser.parse_args()
+
+    if args.command == "shed_diff":
+        cmds = run_shed_diff(args)
+        results = process(test_skippable, cmds, args.cores)
+        if sum(results)==len(results):
+            print "No differences with {0} found, exiting".format(args.shed_target)
+            sys.exit(1)
+        else:
+            sys.exit()
 
     args.report_dir = os.path.abspath(args.report_dir)
     clean_reports(args.report_dir)
@@ -169,6 +213,7 @@ if __name__ == "__main__":
 
     if args.command == "test":
         cmds = run_test(args, current_report_dir)
+
     else:
         api_keys = yaml_to_dict(args.api_keys)
     if args.command == "update":
@@ -176,9 +221,4 @@ if __name__ == "__main__":
     if args.command == "shed_test":
         cmds = run_shed_test(args, current_report_dir, api_keys, args.skip_test)
 
-    if args.cores > 1:
-        p = Pool(processes=args.cores)
-        result = p.map_async(mp_run, cmds) 
-        result.get()
-    else:
-        [mp_run(cmd) for cmd in cmds]
+    process(run_cmd, cmds, args.cores)
