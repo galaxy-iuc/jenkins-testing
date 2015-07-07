@@ -89,11 +89,7 @@ def construct_cmds(tests, action, shed_target=None, api_keys=None, skip_test=Fal
             else:
                 continue
     elif action == 'shed_diff':
-        cmds = []
-        for test in tests:
-            for toolshed in test['toolshed']:
-                if toolshed==shed_target:
-                    cmds.append((test['test_directory'], toolshed))
+        cmds = shed_diff(tests, shed_target)
         return cmds
     else:
         for test in tests:
@@ -122,6 +118,14 @@ def process(func, function_args, cores):
     else:
         results = [func(cmd) for cmd in cmds]
         return results
+
+def shed_diff(tests, shed_target):
+    cmds = []
+    for test in tests:
+        for toolshed in test['toolshed']:
+            if toolshed==shed_target:
+                cmds.append((test['test_directory'], toolshed))
+    return cmds
 
 def test_skippable(function_args):
     test_dir = function_args[0]
@@ -160,12 +164,16 @@ def run_test(args, current_report_dir):
 
 def run_shed_test(args, current_report_dir, api_keys, skip_test):
     '''
-    Run tests by using planemo shed_test, which installs tools and tool dependencies from the toolshed
+    Run tests by using planemo shed_test, which installs tools and tool dependencies from the toolshed.
+    Skip test if package is in name.
     '''
     tests = prepare_tests(args.tool_dirs, current_report_dir, args.report_dir, api_keys)
+    packages = [test for test in tests if test['name'].startswith('package_')]
+    package_cmds = construct_cmds ( tests, args.command, args.shed_target, api_keys)
+    tests = [test for test in tests if not test['name'].startswith('package_')]
     prepare_html(current_report_dir, args.build_number, tests)
     cmds = construct_cmds ( tests, args.command, args.shed_target, api_keys, skip_test)
-    return cmds
+    return package_cmds + cmds
 
 def run_shed_diff(args):
     '''

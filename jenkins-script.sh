@@ -43,9 +43,6 @@ echo "Starting job"
 
 #Local toolshed test
 
-echo $SKIP_TEST
-echo ${SKIP_TEST}
-
 if [ "$TARGET" == "LOCAL" ];
 then
     python ./test-repo.py shed_test --tool_dirs ${WORKSPACE}/packages ${WORKSPACE}/tools \
