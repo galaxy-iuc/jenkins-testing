@@ -169,7 +169,7 @@ def run_shed_test(args, current_report_dir, api_keys, skip_test):
     '''
     tests = prepare_tests(args.tool_dirs, current_report_dir, args.report_dir, api_keys)
     packages = [test for test in tests if test['name'].startswith('package_')]
-    package_cmds = construct_cmds ( packages, args.command, args.shed_target, api_keys)
+    package_cmds = construct_cmds ( packages, 'update', args.shed_target, api_keys)
     tests = [test for test in tests if not test['name'].startswith('package_')]
     prepare_html(current_report_dir, args.build_number, tests)
     cmds = construct_cmds ( tests, args.command, args.shed_target, api_keys, skip_test)
